@@ -1,34 +1,29 @@
 import re
 
 def analyze_sql_query(sql_query):
+    # Extract table names from the SQL query
+    table_names = re.findall(r'\b(?:FROM|JOIN|INTO|UPDATE)\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    table_names = [table.strip() for table_list in table_names for table in table_list.split(',')
+                   if table.strip().upper() not in ['FROM', 'JOIN', 'INTO', 'UPDATE']]
+    
+    # Extract subqueries
+    subqueries = re.findall(r'\bSELECT\s+.*?\bFROM\b', sql_query, re.IGNORECASE)
+    
     # Count the number of joins
     num_joins = len(re.findall(r'\bJOIN\b', sql_query, re.IGNORECASE))
     
     # Count the number of filters (WHERE clause)
     num_filters = len(re.findall(r'\bWHERE\b', sql_query, re.IGNORECASE))
     
-    # Count the number of analytical functions (e.g., COUNT, SUM, AVG, etc.)
-    num_analytical_functions = len(re.findall(r'\b(?:COUNT|SUM|AVG|MIN|MAX)\s*\(', sql_query, re.IGNORECASE))
-    
-    # Extract table names from the SQL query
-    table_names = re.findall(r'\bFROM\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
-    table_names += re.findall(r'\bJOIN\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
-    table_names += re.findall(r'\bINTO\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
-    table_names += re.findall(r'\bUPDATE\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
-    
-    # Count the number of unique tables
-    unique_tables = set([table.strip() for table_list in table_names for table in table_list.split(',')])
-    num_unique_tables = len(unique_tables)
-    
-    # Count the number of multiple WITH clauses
-    num_with_clauses = len(re.findall(r'\bWITH\s+', sql_query, re.IGNORECASE))
+    # Count the number of analytical functions (including window functions)
+    num_analytical_functions = len(re.findall(r'\b(?:COUNT|SUM|AVG|MIN|MAX|ROW_NUMBER|OVER)\s*\(', sql_query, re.IGNORECASE))
     
     return {
         'joins': num_joins,
         'filters': num_filters,
         'analytical_functions': num_analytical_functions,
-        'unique_tables': num_unique_tables,
-        'multi_with_clauses': num_with_clauses
+        'unique_table_names': set(table_names),
+        'subqueries': subqueries
     }
 
 sql_query = """
