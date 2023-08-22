@@ -1,17 +1,21 @@
 import re
 
 def extract_table_names(sql_query):
-    with_tables = re.findall(r'\bWITH\s+([\w,\s]+)\s+AS', sql_query, re.IGNORECASE)
-    with_table_names = [table.strip() for table_list in with_tables for table in table_list.split(',')]
-    
+    # Extract table names from the SQL query
     table_names = re.findall(r'\bFROM\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
     table_names += re.findall(r'\bJOIN\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
     table_names += re.findall(r'\bINTO\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
     table_names += re.findall(r'\bUPDATE\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
     
-    table_names = [table.strip() for table_list in table_names for table in table_list.split(',')]
+    # Extract table names from the WITH clause
+    with_tables = re.findall(r'\bWITH\s+([\w,\s]+)\s+AS', sql_query, re.IGNORECASE)
+    with_table_names = [table.strip() for table_list in with_tables for table in table_list.split(',')]
     
-    return [table for table in table_names if table not in with_table_names]
+    # Exclude table names mentioned in the WITH clause
+    extracted_table_names = [table.strip() for table_list in table_names for table in table_list.split(',')
+                             if table.strip() not in with_table_names]
+    
+    return extracted_table_names
 
 sql_query = """
 WITH Orders AS (
