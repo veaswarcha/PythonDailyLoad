@@ -1,0 +1,26 @@
+import re
+
+def extract_table_names(sql_query):
+    with_tables = re.findall(r'\bWITH\s+([\w,\s]+)\s+AS', sql_query, re.IGNORECASE)
+    with_table_names = [table.strip() for table_list in with_tables for table in table_list.split(',')]
+    
+    table_names = re.findall(r'\bFROM\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    table_names += re.findall(r'\bJOIN\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    table_names += re.findall(r'\bINTO\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    table_names += re.findall(r'\bUPDATE\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    
+    table_names = [table.strip() for table_list in table_names for table in table_list.split(',')]
+    
+    return [table for table in table_names if table not in with_table_names]
+
+sql_query = """
+WITH Orders AS (
+    SELECT OrderID, OrderDate FROM Orders
+)
+SELECT Customers.CustomerName, Orders.OrderDate
+FROM Customers
+JOIN Orders ON Customers.CustomerID = Orders.CustomerID
+"""
+
+table_names = extract_table_names(sql_query)
+print(table_names)
