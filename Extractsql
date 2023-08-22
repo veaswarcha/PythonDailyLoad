@@ -1,0 +1,45 @@
+import re
+
+def analyze_sql_query(sql_query):
+    # Count the number of joins
+    num_joins = len(re.findall(r'\bJOIN\b', sql_query, re.IGNORECASE))
+    
+    # Count the number of filters (WHERE clause)
+    num_filters = len(re.findall(r'\bWHERE\b', sql_query, re.IGNORECASE))
+    
+    # Count the number of functions (SELECT functions)
+    num_functions = len(re.findall(r'\bSELECT\s+[\w\s\(\),]+\b', sql_query, re.IGNORECASE))
+    
+    # Count the number of tables
+    table_names = re.findall(r'\bFROM\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    table_names += re.findall(r'\bJOIN\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    table_names += re.findall(r'\bINTO\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    table_names += re.findall(r'\bUPDATE\s+([\w,\s]+)\b', sql_query, re.IGNORECASE)
+    num_tables = len([table.strip() for table_list in table_names for table in table_list.split(',')])
+    
+    # Count the number of WITH clauses
+    num_with_clauses = len(re.findall(r'\bWITH\s+', sql_query, re.IGNORECASE))
+    
+    return {
+        'joins': num_joins,
+        'filters': num_filters,
+        'functions': num_functions,
+        'tables': num_tables,
+        'with_clauses': num_with_clauses
+    }
+
+sql_query = """
+WITH Orders AS (
+    SELECT OrderID, OrderDate FROM Orders
+),
+Products AS (
+    SELECT ProductID, ProductName FROM Products
+)
+SELECT Customers.CustomerName, Orders.OrderDate
+FROM Customers
+JOIN Orders ON Customers.CustomerID = Orders.CustomerID
+WHERE Orders.OrderDate > '2023-01-01'
+"""
+
+analysis_result = analyze_sql_query(sql_query)
+print(analysis_result)
