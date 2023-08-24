@@ -1,0 +1,27 @@
+def count_filters_in_where(sql_query):
+    keywords = ["WHERE"]
+    operators = ["=", ">", "<", ">=", "<=", "!=", "LIKE", "IN", "BETWEEN"]
+    filters_count = 0
+    is_inside_where = False
+
+    query_parts = sql_query.split()
+    for word in query_parts:
+        if word.upper() == "WHERE":
+            is_inside_where = True
+        elif is_inside_where:
+            if any(op in word.upper() for op in operators):
+                filters_count += 1
+            elif word.upper() in ["AND", "OR"]:
+                is_inside_where = False
+    
+    return filters_count
+
+sql_query = """
+SELECT * FROM orders
+WHERE order_id = 123
+AND amount > 1000
+OR customer_name LIKE 'John%'
+"""
+
+num_filters = count_filters_in_where(sql_query)
+print("Number of filters in WHERE clause:", num_filters)
